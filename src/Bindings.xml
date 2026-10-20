@@ -1,0 +1,4 @@
+<Bindings>
+  <Binding name="GLANCE_SKULL" header="GLANCE" category="ADDONS">Glance_Mark(8)</Binding>
+  <Binding name="GLANCE_CROSS" category="ADDONS">Glance_Mark(7)</Binding>
+</Bindings>

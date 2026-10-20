@@ -1,0 +1,111 @@
+## Interface: 11509, 16001
+## Title: Glance
+## Notes: Combat awareness at a glance: compact player, pet and target bars with known damage (DoTs, cast) and recent-damage trails, an aggro count, runner and interrupt cues, debuffs, cast bars, quest progress and quick raid marks.
+## Author: Researcher
+## IconTexture: Interface\Icons\Ability_Hunter_SniperShot
+## Version: 0.67.1
+## X-License: MIT
+## X-Website: https://github.com/LatentRune/glance
+## SavedVariables: GlanceDB
+## SavedVariablesPerCharacter: GlanceCharDB
+
+# Load order matters: each file can use what the files above it put on `ns`, and hooks
+# run in this order (see core/Hooks.lua and docs/ARCHITECTURE.md). ui/ files are listed
+# in the order their parts are built and stacked; moving one can change what draws over
+# what.
+
+# The foundation: shared table, helpers, hooks, settings, the redraw heartbeat.
+core\Namespace.lua
+core\Util.lua
+core\Compat.lua
+core\Hooks.lua
+core\CombatLog.lua
+core\Defaults.lua
+core\Loop.lua
+
+# What Glance works out from the game. No frames or textures here.
+features\Supplies.lua
+features\Quests.lua
+features\MobHealth.lua
+features\PowerTicks.lua
+features\SwingTimer.lua
+features\Execute.lua
+features\Range.lua
+features\Casts.lua
+features\MobAbilities.lua
+features\Auras.lua
+features\Breath.lua
+features\Threat.lua
+features\KillPace.lua
+features\KnownDamage.lua
+features\Attackers.lua
+features\Loot.lua
+features\ManaCost.lua
+features\Consumables.lua
+features\BuffMemory.lua
+features\Hunter.lua
+features\Runners.lua
+features\Interrupts.lua
+features\TargetClass.lua
+features\Warnings.lua
+features\Gear.lua
+features\Bags.lua
+features\DeathRecap.lua
+features\Spotted.lua
+features\AggroWarn.lua
+features\HealWatch.lua
+features\CrowdControl.lua
+features\Marks.lua
+features\EnemyCombo.lua
+
+# What's drawn. Widgets first, then the groups, then each part in build order.
+ui\widgets\Bar.lua
+ui\widgets\Strip.lua
+ui\widgets\AuraIcon.lua
+ui\widgets\UnitBar.lua
+ui\Slide.lua
+ui\Group.lua
+ui\HideBlizzard.lua
+ui\QuestRows.lua
+ui\ComboBar.lua
+ui\ClickThrough.lua
+ui\RaidMarker.lua
+ui\Fade.lua
+ui\PowerTicks.lua
+ui\LowHealthFlash.lua
+ui\CombatMarker.lua
+ui\Spine.lua
+ui\CastBar.lua
+ui\SwingTimer.lua
+ui\PetBar.lua
+ui\DebuffRow.lua
+ui\BuffRow.lua
+ui\PetDebuffs.lua
+ui\AuraFx.lua
+ui\Breath.lua
+ui\MobAbilities.lua
+ui\ExecuteZone.lua
+ui\KnownDamage.lua
+ui\TargetOfTarget.lua
+ui\ThreatMeter.lua
+ui\KillPace.lua
+ui\Stack.lua
+ui\RaidMarks.lua
+ui\DamageTrail.lua
+ui\ManaCost.lua
+ui\AlertsRow.lua
+ui\TargetTag.lua
+ui\Interrupt.lua
+ui\NpcMenu.lua
+ui\Resting.lua
+
+# Settings, Edit Mode, help and minimal modes, /glance.
+settings\Panel.lua
+settings\EditMode.lua
+settings\Help.lua
+settings\Minimal.lua
+settings\Slash.lua
+
+# The CPU and memory panel (/glance debug) and /glance cpu.
+dev\Profile.lua
+dev\Debug.lua

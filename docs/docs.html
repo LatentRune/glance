@@ -1,0 +1,362 @@
+<!doctype html>
+<!--
+  How Glance works, part by part, for players. Served by GitHub Pages from docs/.
+  The words follow the in-game help (src/settings/Help.lua): when a part changes, update
+  both. Screenshots in images/shots/ are the tools/glance-shots scenarios of the same name:
+    python3 tools/site-images.py
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How Glance works</title>
+<meta name="description" content="Every part of the Glance addon for WoW Classic and Forever explained, with screenshots.">
+<link rel="icon" href="images/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css">
+</head>
+<body>
+
+<header class="top"><div class="wrap">
+  <a class="brand" href="./"><img src="images/favicon.svg" alt="">Glance</a>
+  <nav>
+    <a class="on" href="docs.html">How it works</a>
+    <a class="wide" href="./#install">Install</a>
+    <a class="wide" href="./#community">Community</a>
+    <a href="https://github.com/LatentRune/glance">GitHub</a>
+  </nav>
+</div></header>
+
+<div class="docs">
+<nav class="toc" aria-label="Contents">
+  <a href="#layout">The layout</a>
+  <a href="#your-bars">Your bars</a>
+  <a href="#target">The target's bars</a>
+  <a class="sub" href="#known-damage">Known damage</a>
+  <a class="sub" href="#execute">Execute zone</a>
+  <a class="sub" href="#target-cast">Casts and interrupts</a>
+  <a href="#spine">The spine: threat and mobs on you</a>
+  <a href="#icons">The icon rows</a>
+  <a class="sub" href="#long-buffs">Long buffs</a>
+  <a class="sub" href="#cc-totems">Crowd control and totems</a>
+  <a class="sub" href="#mob-casts">Known mob casts</a>
+  <a href="#warnings">Warnings</a>
+  <a class="sub" href="#death-recap">Death recap</a>
+  <a class="sub" href="#runner">Runners</a>
+  <a class="sub" href="#pvp">Enemy combo points</a>
+  <a class="sub" href="#tanks">Tanks and healers</a>
+  <a href="#quests">Quest progress</a>
+  <a href="#marks">Raid marks</a>
+  <a href="#mob-menu">The mob menu</a>
+  <a href="#clicking">Clicking and targeting</a>
+  <a href="#resting">Fading and resting</a>
+  <a href="#minimal">Minimal mode</a>
+  <a href="#help-mode">Help mode</a>
+  <a href="#moving">Moving and settings</a>
+  <a href="#commands">Commands</a>
+  <a href="#performance">Performance</a>
+  <a href="#learning">What Glance learns</a>
+</nav>
+
+<article>
+
+<section id="layout">
+  <h2>The layout</h2>
+  <p class="clients"><span class="client">Works in Classic</span><span class="client">Works in Forever</span></p>
+  <p>Glance replaces the player and target frames with two groups of bars: <span class="term">yours on the left</span>
+    and <span class="term">the target's on the right</span>, mirrored so they meet in the middle of the screen. Between
+    them runs the <span class="term">spine</span>, a dark track where threat climbs as a flame.</p>
+  <p>Under each group is a stack: your cast, then your buffs and debuffs and warnings on the left; the target's cast,
+    your debuffs on it, its quest progress and raid marks on the right. Each part keeps its place through a fight, so
+    nothing jumps when a cast starts or a debuff falls off.</p>
+  <figure><img class="shot" src="images/shots/combat.webp" width="1024" height="338" alt="A rogue fighting an elite wolf">
+    <figcaption>A rogue mid-fight with an elite wolf and two of its friends: the mob count, hit flash, threat flame,
+      debuffs, quest progress, target of target and the wolf's cast.</figcaption></figure>
+  <p>With nothing targeted and no fight on, your bars sit centered on the screen. A target, combat, or a mob coming for
+    you slides the groups apart to where you placed them. The game won't move these frames during combat, so they snap
+    apart as combat starts and only come back together when it ends.</p>
+  <figure><img class="shot" src="images/shots/idle.webp" width="494" height="184" alt="Your bars alone, centered">
+    <figcaption>Out of combat with nothing targeted: your bars sit centered.</figcaption></figure>
+</section>
+
+<section id="your-bars">
+  <h2>Your bars</h2>
+  <h3>Level and combat</h3>
+  <p>Your level sits beside the outer end of your bars. In combat, red crossed swords take its place: they shrink in
+    and flash as the fight starts, and shatter when it ends.</p>
+  <h3>Health</h3>
+  <p>In your class color. Your name turns green while you're flagged for PvP. Each hit leaves a
+    <span class="term">red chunk</span> where your health was, which shrinks and fades away, so you can see how hard you
+    were just hit. The bar flashes red below 30%.</p>
+  <h3>Power and mana</h3>
+  <p>Energy, rage or mana. A spark marks the next <span class="term">energy tick</span>, or for mana the five-second rule
+    and then each regen tick. While you cast, a pale strip at the end of the fill is the mana that cast will spend.
+    <code>Frostbolt x12</code> at the bar's left end means your mana covers 12 more of your last spell. Druids see their
+    mana on its own bar while shapeshifted.</p>
+  <figure><img class="shot" src="images/shots/mage-cast.webp" width="1014" height="226" alt="A mage casting Frostbolt">
+    <figcaption>A mage casting Frostbolt: the pale strip is what the cast will spend. The target is out of range, so its
+      bars fade while its level stays solid.</figcaption></figure>
+  <h3>Ammo, soul shards and the swing timer</h3>
+  <p>Hunters and warriors with a ranged weapon see their ammo against what the quiver or pouch holds; warlocks see soul
+    shards against their soul bags. The <span class="term">swing timer</span> counts to your next melee swing (white) or
+    ranged shot (green).</p>
+  <h3>Your cast</h3>
+  <p>In its own lane under your bars: the spell and the seconds left. The lane stays put through a fight, so nothing
+    below it moves when you cast.</p>
+  <h3>Your pet</h3>
+  <p>Above the inner end of your bars: its health, with its debuffs above. Hits on it flash red like on yours. Hunters
+    also see its mood here.</p>
+  <figure><img class="shot" src="images/shots/warlock.webp" width="1020" height="320" alt="A warlock with a Voidwalker">
+    <figcaption>A warlock with a Voidwalker, soul shards, and a caster target mid-cast.</figcaption></figure>
+</section>
+
+<section id="target">
+  <h2>The target's bars</h2>
+  <h3>Level and classification</h3>
+  <p>The level beside the outer end is colored by difficulty: <code>+</code> means elite and <code>??</code> means far
+    above you. Above it sits a tag: <code>ELITE</code>, <code>RARE</code>, <code>BOSS</code>, the enemy faction, or your
+    own faction in green for a player on your side, plus <code>PVP</code> when it's flagged. Corner brackets around the
+    bars take the tag's color.</p>
+  <figure><img class="shot" src="images/shots/ally.webp" width="1014" height="248" alt="An allied player targeted">
+    <figcaption>A player of your own faction: green corner brackets and their faction. Your pet's bar sits above the
+      inner end of yours.</figcaption></figure>
+  <h3>Health</h3>
+  <p>In class color, or gray when someone else tagged it. The panel's edge shows friend or foe. The name is green for a
+    friend flagged for PvP and red for a flagged foe. Hits leave the same shrinking red chunk as on yours.</p>
+  <h3>Combo points</h3>
+  <p>Yours on this target, one gold segment per point along the top of its health.</p>
+  <h3>Target of target and kill pace</h3>
+  <p>Above the inner end: who your target is attacking. When it's you it says <code>YOU</code> in red, blinking for a few
+    seconds as it turns to you. Above the outer end, <span class="term">kill pace</span> shows how long this fight has
+    run against your usual time for this kind of mob (<code>~12s</code> before the fight starts).</p>
+
+  <h3 id="known-damage">Known damage</h3>
+  <p>Green and pale strips on the target's health are damage already on its way: what your DoTs will still deal, and
+    the spell you're casting. When that's enough, it says <code>DOTS KILL</code> or <code>KILL</code>; otherwise
+    <code>x3</code> means three more of your usual attack.</p>
+
+  <h3 id="execute">Execute zone</h3>
+  <p>For warriors and paladins, a gold tick marks 20% on the target's health, and orange corner brackets pulse once it's
+    below, in Execute or Hammer of Wrath range.</p>
+  <figure><img class="shot" src="images/shots/execute.webp" width="1020" height="292" alt="A mob at 14% in execute range">
+    <figcaption>A warrior with a caster mob at 14%: the tick at 20%, pulsing brackets, and the mob's known casts at the
+      right of the icon row, Frostbolt lit because it's casting it now.</figcaption></figure>
+
+  <h3 id="target-cast">Casts and interrupts</h3>
+  <p>The target's cast has its own lane under its bars, kept while you fight a hostile target so its debuffs never jump.
+    It glows blue only when the cast can be interrupted and you have an interrupt ready.</p>
+</section>
+
+<section id="spine">
+  <h2>The spine: threat and mobs on you</h2>
+  <p>The <span class="term">threat flame</span> climbs the dark track between the two groups and heats up with your share
+    of threat on the target, with the number beside it when there's room. It flashes red for two seconds when you pull
+    aggro.</p>
+  <p>Under it, a number counts the <span class="term">mobs on you</span> or your pet once there are two or more: anything
+    that hit you in the last few seconds, and anything with you on its threat list (feared mobs, mobs on your Voidwalker,
+    mobs still running in). It flashes above two. Mobs heading your way that haven't hit yet show as
+    <code>+2 INCOMING</code> on your alerts row.</p>
+  <figure><img class="shot" src="images/shots/runner.webp" width="1024" height="322" alt="Threat flashing red as aggro is pulled">
+    <figcaption>You've just pulled aggro off your pet, so the threat flame flashes red. The mob is about to flee.</figcaption></figure>
+</section>
+
+<section id="icons">
+  <h2>The icon rows</h2>
+  <p>Under your bars, one row holds everything on you. <span class="term">Debuffs</span> come in from the right, newest at
+    the edge, with a red edge. From the left come your buffs: <span class="term">short buffs</span> (procs, Slice and Dice,
+    trinkets) with a green edge, then your crowd control on mobs (purple) and your totems (teal).</p>
+  <p>A dark sweep with a bright hand goes around each timed icon over its whole duration, darkening the time already
+    gone. New icons shrink into place as they fade in, and ones that end break apart. Hover any icon for its tooltip.</p>
+  <figure><img class="shot" src="images/shots/buffs.webp" width="1020" height="290" alt="Buffs and debuffs sharing a row">
+    <figcaption>Short buffs from the left with a green edge, debuffs from the right.</figcaption></figure>
+  <figure><img class="shot" src="images/shots/aura-fx.webp" width="1020" height="296" alt="Debuffs arriving and leaving">
+    <figcaption>On the target: Rend just went on and is still growing in; Sunder Armor just fell off and is breaking apart.</figcaption></figure>
+
+  <h3 id="long-buffs">Long buffs</h3>
+  <p>Your long buffs take one slot at the left, with a blue edge: the one running out soonest, and <code>+N</code> for how
+    many more. Hover it to see them all. A paladin's aura or a hunter's aspect always takes this slot.</p>
+  <figure><img class="shot" src="images/shots/long-buffs.webp" width="1020" height="346" alt="Long buffs opened by hovering">
+    <figcaption>One long buff on the row, and all of them open while it's hovered.</figcaption></figure>
+
+  <h3 id="cc-totems">Crowd control and totems</h3>
+  <p>Your Sap, Polymorph, Fear and other crowd control count down on your row, as do a shaman's totems. One that breaks
+    or ends early flashes red for three seconds.</p>
+  <div class="grid">
+    <figure><img class="shot" src="images/shots/rogue-cc.webp" width="1014" height="288" alt="A rogue's Sap and a broken Gouge">
+      <figcaption>A rogue in stealth: Sap counting down, a Gouge that just broke, and an eye because a mob spotted you.</figcaption></figure>
+    <figure><img class="shot" src="images/shots/shaman-totems.webp" width="1020" height="290" alt="Shaman totems counting down">
+      <figcaption>A shaman's totems; one just destroyed flashes red.</figcaption></figure>
+  </div>
+
+  <h3 id="mob-casts">Your debuffs on the target, and known mob casts</h3>
+  <p>Under the target, your debuffs on it come in from the left with a red edge, and pulse when about to run out. On the
+    right, dimmed, are the casts this kind of mob has used before: blue-edged if they can be interrupted, gray if not.
+    The one it's casting lights up, so you know what's coming before the cast bar says it.</p>
+</section>
+
+<section id="warnings">
+  <h2>Warnings</h2>
+  <p>Glance only warns about things you can act on. Most sit on your icon row, the rest on the alerts row below it.</p>
+  <ul>
+    <li><span class="term">Potion:</span> a healing potion or healthstone you have ready, when you're low.</li>
+    <li><span class="term">Missing buffs:</span> buffs you usually keep up that dropped. Right-click one to dismiss it.</li>
+    <li><span class="term">Incoming:</span> <code>+N INCOMING</code> for mobs heading your way.</li>
+    <li><span class="term">Hunters:</span> ammo running out, pet unhappy, and the dead zone where you're too close to shoot and too far to melee.</li>
+    <li><span class="term">Worn gear:</span> an anvil when gear is worn or broken.</li>
+    <li><span class="term">Full bags:</span> an orange-edged bag.</li>
+    <li><span class="term">Loot:</span> a gold-edged bag while kills of yours still have loot.</li>
+    <li><span class="term">Breath:</span> a blue-edged icon counting your air underwater, flashing faster as it runs out and red while drowning.</li>
+    <li><span class="term">Spotted:</span> an eye when a mob notices you in stealth.</li>
+  </ul>
+  <p>Right-click the loot, gear, bag or skull icon to hide it.</p>
+  <div class="grid">
+    <figure><img class="shot" src="images/shots/loot.webp" width="1048" height="416" alt="The loot reminder">
+      <figcaption>After a fight: two of your kills still have loot.</figcaption></figure>
+    <figure><img class="shot" src="images/shots/breath.webp" width="1004" height="384" alt="The breath warning">
+      <figcaption>Underwater with 12 seconds of air left.</figcaption></figure>
+  </div>
+
+  <h3 id="death-recap">Death recap</h3>
+  <p>After you die, a skull on your row shows how. Hover it for the last ten seconds of damage you took.</p>
+  <figure><img class="shot" src="images/shots/warnings.webp" width="1004" height="572" alt="Worn gear, full bags and the death recap">
+    <figcaption>After a bad pull: worn gear, full bags and a death recap, beside a real debuff with a red edge.</figcaption></figure>
+
+  <h3 id="runner">Runners</h3>
+  <p><code>RUNNER</code> flashes over the target's bars when a mob is about to flee. Humanoids run near 20% health, and
+    Glance remembers any other kind of mob it has seen run.</p>
+
+  <h3 id="pvp">Enemy combo points on you</h3>
+  <p>Gold segments along the top of your health, filling from the middle outward, are the combo points an enemy rogue or
+    cat druid has built on you. You know how big the finisher will be before it lands.</p>
+  <figure><img class="shot" src="images/shots/pvp-rogue.webp" width="1020" height="320" alt="An enemy rogue's combo points on you">
+    <figcaption>A mage jumped by a rogue: Cheap Shot and two Sinister Strikes, so three points show.</figcaption></figure>
+
+  <h3 id="tanks">Tanks and healers</h3>
+  <p>When a groupmate gets close to pulling aggro off you, a taunt icon flashes. While the last player you healed is under
+    half health, their heal icon flashes too.</p>
+  <figure><img class="shot" src="images/shots/tank-warnings.webp" width="1020" height="330" alt="A paladin tank's warnings">
+    <figcaption>A paladin tanking: Devotion Aura holds the long-buff slot, a groupmate close to pulling aggro flashes a
+      warning, and so does the last player healed.</figcaption></figure>
+</section>
+
+<section id="quests">
+  <h2>Quest progress</h2>
+  <p>Under the target: the kills and items it counts for, with how often its kind drops the items you need. The game
+    doesn't share drop tables, so Glance learns them from your own kills and loot, shared across your characters. Until a
+    first drop, it guesses from names ("Boar Meat" from a "Crag Boar"). Hover a row for its quest.</p>
+  <figure><img class="shot" src="images/shots/quest-tooltip.webp" width="1526" height="472" alt="Hovering a quest row">
+    <figcaption>Hovering a quest task under the target.</figcaption></figure>
+</section>
+
+<section id="marks">
+  <h2>Raid marks</h2>
+  <p>A skull sits at the outer end of the target's icon row. Click it to mark the target; hover it for all eight marks.
+    It shows the target's mark when it has another. <kbd>Ctrl</kbd>-click the target's bars for skull and
+    <kbd>Alt</kbd>-click for cross, or bind keys for them under Glance in the game's key bindings. Marking with the mark
+    it already has clears it. The mark on you shows beside your level.</p>
+</section>
+
+<section id="mob-menu">
+  <h2>The mob menu</h2>
+  <p>Right-click a mob's bars for Glance's part of its menu: its health and where the number comes from, your kills and
+    loot, your average fight, drop rates and quest progress. It also lets you announce the pull or your quest progress,
+    open the mob on Wowhead, or forget what Glance learned about it.</p>
+</section>
+
+<section id="clicking">
+  <h2>Clicking and targeting</h2>
+  <p>Left and right drags that start on the bars still turn the camera, so the bars never get in the way in the middle of
+    your screen. To click them, hold <kbd>Shift</kbd>, <kbd>Ctrl</kbd> or <kbd>Alt</kbd>. A plain right-click still
+    opens the unit menu. Your own bars take a plain click while they rest faded. All of this works in combat.</p>
+</section>
+
+<section id="resting">
+  <h2>Fading and resting</h2>
+  <p>Your bars dim while you're idle: full health and power, nothing targeted, out of combat. The target's dim while it's
+    out of range, with its level kept solid. In an inn or a city, a Zzz above your level means you're earning rested
+    experience.</p>
+  <figure><img class="shot" src="images/shots/resting.webp" width="494" height="198" alt="Resting in an inn">
+    <figcaption>Resting in an inn: the bars rest faded, the Zzz stays solid.</figcaption></figure>
+</section>
+
+<section id="minimal">
+  <h2>Minimal mode</h2>
+  <p>Slim bars with no backgrounds and almost no text; only the target's name stays. Switch with the small button under
+    your level or <code>/glance minimal</code>. In combat the bars slim down at once; their click areas catch up when
+    combat ends.</p>
+  <figure><img class="shot" src="images/shots/minimal.webp" width="1068" height="336" alt="The combat scene in minimal mode">
+    <figcaption>The same fight as at the top of this page, in minimal mode.</figcaption></figure>
+</section>
+
+<section id="help-mode">
+  <h2>Help mode</h2>
+  <p>Help mode is on for a fresh install. Hover any part of the bars to see what it shows, in the words on this page.
+    Click the <code>?</code> under your level to turn it off; <code>/glance help</code> brings it back.</p>
+  <figure><img class="shot" src="images/shots/help.webp" width="1456" height="648" alt="Help mode hovering the target's health">
+    <figcaption>Help mode, hovering the target's health.</figcaption></figure>
+</section>
+
+<section id="moving">
+  <h2>Moving and settings</h2>
+  <p>Open Blizzard's Edit Mode, or type <code>/glance unlock</code>. Each group shows a blue box: drag it to move the
+    group, click it for its settings. You don't have to: on first run, and after <code>/glance reset</code>, the bars
+    start just below the middle of the screen.</p>
+  <p>Each group has its own settings: width, health and power height, text size, scale and opacity, and a checkbox for
+    every part on this page.</p>
+  <figure><img class="shot" src="images/shots/unlocked.webp" width="1014" height="1536" alt="The settings panel for your bars" style="width:min(520px, 100%)">
+    <figcaption>Unlocked, with the settings for your bars open.</figcaption></figure>
+</section>
+
+<section id="commands">
+  <h2>Commands</h2>
+  <div class="scroll"><table>
+    <tr><th>Command</th><th>What it does</th></tr>
+    <tr><td><code>/glance unlock</code>, <code>/glance lock</code></td><td>Show the blue boxes: drag to move, click for settings. Edit Mode does the same.</td></tr>
+    <tr><td><code>/glance minimal</code></td><td>Slim bars with almost no text.</td></tr>
+    <tr><td><code>/glance colors</code></td><td>Switch between deep and bright bar colors.</td></tr>
+    <tr><td><code>/glance blizzard</code></td><td>Hide or show Blizzard's own player and target frames.</td></tr>
+    <tr><td><code>/glance reset</code></td><td>Sizes and positions back to the defaults.</td></tr>
+    <tr><td><code>/glance help</code></td><td>Help mode: hover anything to learn what it shows.</td></tr>
+    <tr><td><code>/glance cpu [seconds]</code></td><td>Time what Glance costs while you play (30 seconds by default).</td></tr>
+    <tr><td><code>/glance debug</code></td><td>Live CPU and memory bars under yours.</td></tr>
+  </table></div>
+</section>
+
+<section id="performance">
+  <h2>Performance</h2>
+  <p>Glance is built to cost as little as possible in a fight, and it lets you check. <code>/glance debug</code> shows live
+    bars under yours: CPU for each part, memory and how fast it grows, combat log lines, and the mob count. Each bar is
+    scaled to the highest value of the last 30 seconds, so a spike fills it. <code>/glance cpu</code> times a stretch of
+    play and prints where the time went.</p>
+  <figure><img class="shot" src="images/shots/debug.webp" width="1020" height="528" alt="The performance panel">
+    <figcaption>The performance panel under your bars.</figcaption></figure>
+</section>
+
+<section id="learning">
+  <h2>What Glance learns</h2>
+  <p>Some parts get better the more you play, because the game doesn't tell addons these things directly. All of it stays
+    in your own saved variables.</p>
+  <ul>
+    <li><span class="term">Drop rates</span> for quest items, from every kill and corpse you loot. Shared by your characters.</li>
+    <li><span class="term">Mob casts,</span> from what each kind of mob has cast near you.</li>
+    <li><span class="term">Runners,</span> from every mob seen fleeing.</li>
+    <li><span class="term">Kill pace,</span> from how long fights with each kind of mob take this character.</li>
+    <li><span class="term">Your usual buffs,</span> from which long buffs are up when your fights start.</li>
+  </ul>
+  <p>To forget what it learned about one mob, use <a href="#mob-menu">the mob menu</a>.</p>
+  <div class="note">Something here doesn't match what you see in game? <a href="https://github.com/LatentRune/glance/issues/new?template=bug.yml">Tell us</a>,
+    with a screenshot if you can, or ask on <a href="https://discord.gg/wcCfAmMsFV">Discord</a>.</div>
+</section>
+
+</article>
+</div>
+
+<footer><div class="wrap">
+  <p>Glance is open source under the <a href="https://github.com/LatentRune/glance/blob/main/LICENSE">MIT license</a>.
+    <a href="https://github.com/LatentRune/glance">Source on GitHub</a>.</p>
+  <p>A fan-made addon. Not made, endorsed or supported by Blizzard Entertainment.
+    World of Warcraft is a trademark of Blizzard Entertainment, Inc.</p>
+</div></footer>
+</body>
+</html>
